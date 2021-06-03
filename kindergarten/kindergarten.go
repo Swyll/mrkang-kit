@@ -85,7 +85,7 @@ func (k *Kindergaeten) Start() error {
 
 	for _, kid := range k.kids {
 		server := kid
-		eg.Go(kid.Start)
+		eg.Go(server.Start)
 
 		eg.Go(func() error {
 			<-ctx.Done()
