@@ -11,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func ExecCommand(command, stdin string, stdout io.Writer, cmdch chan<- *exec.Cmd) error {
+func ExecCommand(command, stdin string, stdout io.Writer, cmdch chan<- *exec.Cmd, envs []string) error {
 	if command == "" {
 		return errors.New("Command is nil")
 	}
@@ -28,6 +28,10 @@ func ExecCommand(command, stdin string, stdout io.Writer, cmdch chan<- *exec.Cmd
 	}
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
+
+	if envs != nil {
+		cmd.Env = envs
+	}
 
 	if stdin != "" {
 		cmd.Stdin = bytes.NewReader([]byte(stdin))

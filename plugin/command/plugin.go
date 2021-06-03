@@ -2,7 +2,6 @@ package command
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"os/exec"
 	"strings"
@@ -18,6 +17,7 @@ type Command struct {
 
 	stdin string
 	cmdch chan *exec.Cmd
+	env   []string
 }
 
 type opt func(*Command)
@@ -25,7 +25,6 @@ type opt func(*Command)
 func NewCommandPlu(startCommand string, opts ...opt) *Command {
 	command := &Command{
 		startCommand: startCommand,
-		cmdch:        make(chan *exec.Cmd, 1),
 	}
 
 	for _, opt := range opts {
@@ -53,8 +52,17 @@ func WithStin(stdin string) opt {
 	}
 }
 
+func WithEnv(env []string) opt {
+	return func(c *Command) {
+		c.env = env
+	}
+}
+
 func (c *Command) Run(stdout io.Writer) error {
-	err := ExecCommand(c.startCommand, c.stdin, stdout, c.cmdch)
+	cmdch := make(chan *exec.Cmd, 1)
+	c.cmdch = cmdch
+
+	err := ExecCommand(c.startCommand, c.stdin, stdout, c.cmdch, c.env)
 	if err != nil && !strings.Contains(err.Error(), "killed") {
 		return errors.Wrap(err, "startCommand err:")
 	}
@@ -67,9 +75,8 @@ func (c *Command) Cannel() error {
 	defer cancel()
 
 	go func() {
-		err := ExecCommand(c.stopCommand, "", nil, nil)
+		err := ExecCommand(c.stopCommand, "", nil, nil, c.env)
 		if err != nil {
-			fmt.Println(err)
 			cancel()
 		}
 	}()
@@ -90,7 +97,7 @@ func (c *Command) Cannel() error {
 }
 
 func (c *Command) Stop() error {
-	err := ExecCommand(c.stopCommand, "", nil, nil)
+	err := ExecCommand(c.stopCommand, "", nil, nil, c.env)
 	if err != nil {
 		return errors.Wrap(err, "stopCommand err:")
 	}
