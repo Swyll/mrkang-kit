@@ -2,12 +2,14 @@ package plugin
 
 import (
 	"bytes"
+	"sync"
 	"sync/atomic"
 	"time"
 )
 
 type PluginScheduler struct {
-	run func(Plugin)
+	run    func(Plugin)
+	funcMu sync.Mutex
 
 	ps    []Plugin
 	index int64
@@ -39,15 +41,25 @@ func (schd *PluginScheduler) Run() {
 			index = 0
 		}
 
-		schd.run(schd.ps[index])
+		schd.funcMu.Lock()
+		run := schd.run
+		schd.funcMu.Unlock()
+
+		run(schd.ps[index])
 	}
 }
 
 func (schd *PluginScheduler) Start() {
+	schd.funcMu.Lock()
+	defer schd.funcMu.Unlock()
+
 	schd.run = schd.play
 }
 
 func (schd *PluginScheduler) Stop() {
+	schd.funcMu.Lock()
+	defer schd.funcMu.Unlock()
+
 	schd.run = func(Plugin) {
 		time.Sleep(time.Second * 1)
 	}
@@ -67,7 +79,11 @@ func (schd *PluginScheduler) Finalized() {
 
 func (schd *PluginScheduler) ReStart() {
 	schd.Stop()
+
+	schd.funcMu.Lock()
 	schd.run = schd.play
+	schd.funcMu.Unlock()
+
 	schd.ps[schd.index].Cannel()
 
 	schd.index = -1
