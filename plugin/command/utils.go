@@ -6,7 +6,6 @@ import (
 	"io"
 	"os/exec"
 	"strconv"
-	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -16,10 +15,10 @@ func ExecCommand(command, stdin string, stdout io.Writer, cmdch chan<- *exec.Cmd
 		return errors.New("Command is nil")
 	}
 
-	command = strings.Trim(command, " ")
-	cms := strings.Split(command, " ")
+	//command = strings.Trim(command, " ")
+	//cms := strings.Split(command, " ")
 
-	cmd := exec.Command(cms[0], cms[1:]...)
+	cmd := exec.Command("/bin/sh", "-c", command)
 	if cmdch != nil {
 		cmdch <- cmd
 	}

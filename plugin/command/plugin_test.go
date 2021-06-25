@@ -9,7 +9,7 @@ import (
 )
 
 func TestPlugin(t *testing.T) {
-	cmd := NewCommandPlu("./swy")
+	cmd := NewCommandPlu("./main -dd ffffff")
 
 	b := make([]byte, 10, 10)
 	bf := bytes.NewBuffer(b)
