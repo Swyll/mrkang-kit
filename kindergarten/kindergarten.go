@@ -2,11 +2,12 @@ package kindergarten
 
 import (
 	"context"
-	"mrkang-kit/log"
-	"mrkang-kit/log/zaplogger"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/Swyll/mrkang-kit/log"
+	"github.com/Swyll/mrkang-kit/log/zaplogger"
 
 	"golang.org/x/sync/errgroup"
 )

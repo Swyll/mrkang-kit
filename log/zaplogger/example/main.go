@@ -1,8 +1,8 @@
 package main
 
 import (
-	"mrkang-kit/log"
-	"mrkang-kit/log/zaplogger"
+	"github.com/Swyll/mrkang-kit/log"
+	"github.com/Swyll/mrkang-kit/log/zaplogger"
 )
 
 func main() {

@@ -3,7 +3,7 @@ package zaplogger
 import (
 	"os"
 
-	"mrkang-kit/log"
+	"github.com/Swyll/mrkang-kit/log"
 
 	"github.com/natefinch/lumberjack"
 	"go.uber.org/zap"

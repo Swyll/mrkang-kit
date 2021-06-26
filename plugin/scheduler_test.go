@@ -2,10 +2,11 @@ package plugin
 
 import (
 	"fmt"
-	"mrkang-kit/plugin/command"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/Swyll/mrkang-kit/plugin/command"
 )
 
 func TestSched(t *testing.T) {
