@@ -1,4 +1,4 @@
-module mrkang-kit
+module github.com/Swyll/mrkang-kit
 
 go 1.13
 
