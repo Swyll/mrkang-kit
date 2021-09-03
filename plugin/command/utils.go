@@ -40,10 +40,7 @@ func ExecCommand(command, stdin string, stdout io.Writer, cmdch chan<- *exec.Cmd
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	err = cmd.Wait()
-	if err != nil {
-		return errors.WithStack(err)
-	}
+	cmd.Wait()
 
 	errStr := stderr.String()
 	if errStr != "" {
