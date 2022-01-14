@@ -14,17 +14,23 @@ type PluginScheduler struct {
 	ps    []Plugin
 	index int64
 	msg   chan *message
+
+	//是否报错退出
+	isErrStop bool
 }
 
 type message struct {
+	Msg map[string]string
+
 	Stdout string
 	Err    error
 }
 
-func NewSche(ps ...Plugin) (*PluginScheduler, <-chan *message) {
+func NewSche(isErrStop bool, ps ...Plugin) (*PluginScheduler, <-chan *message) {
 	schd := &PluginScheduler{
-		ps:  ps,
-		msg: make(chan *message, len(ps)),
+		ps:        ps,
+		msg:       make(chan *message, len(ps)),
+		isErrStop: isErrStop,
 	}
 	schd.run = schd.play
 
@@ -47,6 +53,7 @@ func (schd *PluginScheduler) Run() {
 
 		run(schd.ps[index])
 	}
+
 }
 
 func (schd *PluginScheduler) Start() {
@@ -72,9 +79,19 @@ func (schd *PluginScheduler) Finalized() {
 	if index == -1 {
 		index = 0
 	}
+	//TODO out of index
+	if index >= int64(len(schd.ps)) {
+		return
+	}
 	schd.ps[index].Cannel()
 
 	atomic.StoreInt64(&schd.index, int64(len(schd.ps)))
+}
+
+func (schd *PluginScheduler) Reset() {
+	schd.ps[schd.index].Cannel()
+
+	schd.index = -1
 }
 
 func (schd *PluginScheduler) ReStart() {
@@ -94,8 +111,12 @@ func (schd *PluginScheduler) play(p Plugin) {
 
 	err := p.Run(&b)
 	schd.msg <- &message{
+		Msg:    p.GetMsg(),
 		Stdout: b.String(),
 		Err:    err,
+	}
+	if schd.isErrStop && err != nil {
+		schd.Finalized()
 	}
 
 	atomic.AddInt64(&schd.index, 1)

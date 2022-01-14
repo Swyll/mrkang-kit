@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"unsafe"
 )
 
 //Client http客户端
@@ -11,7 +12,7 @@ type Client struct {
 	client *http.Client
 }
 
-type DealRespOpt func(*http.Response) unsaafe.Pointer
+type DealRespOpt func(*http.Response) unsafe.Pointer
 
 type DealReqOpt func(*http.Request)
 

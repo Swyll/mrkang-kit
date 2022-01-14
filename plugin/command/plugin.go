@@ -18,6 +18,9 @@ type Command struct {
 	stdin string
 	cmdch chan *exec.Cmd
 	env   []string
+
+	msg  map[string]string
+	args []string
 }
 
 type opt func(*Command)
@@ -58,11 +61,17 @@ func WithEnv(env []string) opt {
 	}
 }
 
+func WithMsg(msg map[string]string) opt {
+	return func(c *Command) {
+		c.msg = msg
+	}
+}
+
 func (c *Command) Run(stdout io.Writer) error {
 	cmdch := make(chan *exec.Cmd, 1)
 	c.cmdch = cmdch
 
-	err := ExecCommand(c.startCommand, c.stdin, stdout, c.cmdch, c.env)
+	err := ExecCommand(c.startCommand+" "+strings.Join(c.args, " "), c.stdin, stdout, c.cmdch, c.env)
 	if err != nil && !strings.Contains(err.Error(), "killed") {
 		return errors.Wrap(err, "startCommand err:")
 	}
@@ -103,4 +112,16 @@ func (c *Command) Stop() error {
 	}
 
 	return nil
+}
+
+func (c *Command) GetMsg() map[string]string {
+	return c.msg
+}
+
+func (c *Command) SetArgs(args ...string) {
+	c.args = args
+}
+
+func (c *Command) AddEnv(k, v string) {
+	c.env = append(c.env, k+"="+v)
 }
