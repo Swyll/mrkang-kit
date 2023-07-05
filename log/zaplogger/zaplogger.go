@@ -26,8 +26,12 @@ type conf struct {
 }
 
 type LoggerAgent struct {
-	*zap.AtomicLevel
+	level *zap.AtomicLevel
 	*zap.SugaredLogger
+}
+
+func (la *LoggerAgent) SetLogLevel(level string) {
+	la.level.SetLevel(GetLogLevel(level))
 }
 
 // GetLogLevel 从字符串获取日志等级
@@ -112,7 +116,7 @@ func Logger(opts ...OptFunc) log.Logger {
 	logger := zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
 	return &LoggerAgent{
 		SugaredLogger: logger.Sugar(),
-		AtomicLevel:   level,
+		level:         level,
 	}
 }
 

@@ -21,4 +21,6 @@ type Logger interface {
 	Fatal(v ...interface{})
 	Fatalf(format string, v ...interface{})
 	//Fatalln(v ...interface{})
+
+	SetLogLevel(string)
 }
