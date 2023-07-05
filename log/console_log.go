@@ -83,3 +83,6 @@ func (l *ConsoleLogger) Fatalf(format string, v ...interface{}) {
 func (l *ConsoleLogger) Fatalln(v ...interface{}) {
 	fmt.Println("[\x1b[31mFATA\x1b[0m]", v)
 }
+
+func (l *ConsoleLogger) SetLogLevel(level string) {
+}
