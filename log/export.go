@@ -2,57 +2,82 @@ package log
 
 var std Logger
 
-//Init 初始化方法
-func Init(logger Logger) {
+// SetLogger 设置日志
+func SetLogger(logger Logger) {
 	std = logger
 }
 
-//Debug debug等级写入
+// Debug debug level
 func Debug(v ...interface{}) {
 	std.Debug(v...)
 }
 
-//Debugf debug拼接写入
+// Debugf debug level
 func Debugf(format string, v ...interface{}) {
 	std.Debugf(format, v...)
 }
 
-//Info info等级写入
+//// Debugln debug level
+//func Debugln(v ...interface{}) {
+//	std.Debugln(v...)
+//}
+
+// Info info level
 func Info(v ...interface{}) {
 	std.Info(v...)
 }
 
-//Infof info拼接写入
+// Infof info level
 func Infof(format string, v ...interface{}) {
 	std.Infof(format, v...)
 }
 
-//Warn warn等级写入
+//// Infoln info level
+//func Infoln(v ...interface{}) {
+//	std.Infoln(v...)
+//}
+
+// Warn warn level
 func Warn(v ...interface{}) {
 	std.Warn(v...)
 }
 
-//Warnf warn拼接写入
+// Warnf warn level
 func Warnf(format string, v ...interface{}) {
 	std.Warnf(format, v...)
 }
 
-//Error error等级写入
+//// Warnln warn level
+//func Warnln(v ...interface{}) {
+//	std.Warnln(v...)
+//}
+
+// Error error level
 func Error(v ...interface{}) {
 	std.Error(v...)
 }
 
-//Errorf error拼接写入
+// Errorf error level
 func Errorf(format string, v ...interface{}) {
 	std.Errorf(format, v...)
 }
 
-//Fatal fatal等级写入
+//// Errorln error level
+//func Errorln(v ...interface{}) {
+//	std.Errorln(v...)
+//}
+
+// Fatal fatal level
 func Fatal(v ...interface{}) {
 	std.Fatal(v...)
 }
 
-//Fatalf fatal拼接写入
+// Fatalf fatal level
 func Fatalf(format string, v ...interface{}) {
 	std.Fatalf(format, v...)
 }
+
+//// Fatalln fatal level
+//func Fatalln(v ...interface{}) {
+//	std.Fatalln(v...)
+//}

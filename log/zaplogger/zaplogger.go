@@ -2,57 +2,73 @@ package zaplogger
 
 import (
 	"os"
+	"strings"
+	"time"
 
-	"github.com/Swyll/mrkang-kit/log"
+	"xenergyconservation/pkg/log"
 
 	"github.com/natefinch/lumberjack"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
-type LoggerConf struct {
-	FilePath      string `ini:"filepath" comment:"日志路径"`
-	MaxSize       int    `ini:"maxsize" comment:"每个日志文件保存的最大尺寸单位为M"`
-	MaxBackup     int    `ini:"maxbackup" comment:"日志文件最多保存的个数"`
-	MaxAge        int    `ini:"maxage" comment:"日志文件最多保存的天数"`
-	Compress      bool   `ini:"compress" comment:"是否压缩"`
-	EnableConsole bool   `ini:"enableconsole" comment:"是否打印到控制台"`
+// OptFunc 可选日志配置
+type OptFunc func(*conf)
+
+type conf struct {
+	filePath      string        // 日志文件路径
+	level         zapcore.Level // 日志级别
+	maxSize       int           // 每个日志文件保存的最大尺寸 单位：M
+	maxBackups    int           // 日志文件最多保存多少个备份
+	maxAge        int           // 文件最多保存多少天
+	compress      bool          // 是否压缩
+	enableConsole bool          // 是否打印到控制台
 }
 
-func NewDefauLogger() log.Logger {
-	return NewLog(&LoggerConf{
-		FilePath:      "/var/log/swy.log",
-		MaxSize:       20,
-		MaxBackup:     5,
-		MaxAge:        100,
-		Compress:      false,
-		EnableConsole: true,
-	})
+// GetLogLevel 从字符串获取日志等级
+func GetLogLevel(level string) zapcore.Level {
+	v := strings.ToLower(level)
+	switch v {
+	case "debug":
+		return zapcore.DebugLevel
+	case "info":
+		return zapcore.InfoLevel
+	case "warn":
+		return zapcore.WarnLevel
+	case "error":
+		return zapcore.ErrorLevel
+	case "dpanic":
+		return zapcore.DPanicLevel
+	case "panic":
+		return zapcore.PanicLevel
+	case "faltal":
+		return zapcore.FatalLevel
+	default:
+		return zapcore.WarnLevel
+	}
 }
 
-/**
- * 获取日志
- * filePath 日志文件路径
- * level 日志级别
- * maxSize 每个日志文件保存的最大尺寸 单位：M
- * maxBackups 日志文件最多保存多少个备份
- * maxAge 文件最多保存多少天
- * compress 是否压缩
- * serviceName 服务名
- */
-func NewLog(conf *LoggerConf) log.Logger {
-	//now := time.Now()
-	/**
-	 *lumberjack.Logger实现了io.Writer接口,而zap和zapcore中的很多结构体都实现了io.Writer,所以
-	 *实际上zap中的io调用的是lumberjack.Logger实现的方法
-	 */
+// Logger 日志配置
+func Logger(opts ...OptFunc) log.Logger {
+	c := &conf{
+		filePath:      "log/app.log",
+		level:         1,
+		maxSize:       5,
+		maxBackups:    5,
+		maxAge:        365,
+		compress:      false,
+		enableConsole: false,
+	}
+	for _, opt := range opts {
+		opt(c)
+	}
+
 	hook := &lumberjack.Logger{
-		//Filename:   fmt.Sprintf("log/%04d%02d%02d%02d%02d%02d", now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second()), //filePath
-		Filename:   conf.FilePath,
-		MaxSize:    conf.MaxSize, // megabytes
-		MaxBackups: conf.MaxBackup,
-		MaxAge:     conf.MaxAge,   //days
-		Compress:   conf.Compress, // disabled by default
+		Filename:   c.filePath, //filePath
+		MaxSize:    c.maxSize,  // megabytes
+		MaxBackups: c.maxBackups,
+		MaxAge:     c.maxAge,   //days
+		Compress:   c.compress, // disabled by default
 	}
 	defer hook.Close()
 	/*zap 的 Config 非常的繁琐也非常强大，可以控制打印 log 的所有细节，因此对于我们开发者是友好的，有利于二次封装。
@@ -61,32 +77,81 @@ func NewLog(conf *LoggerConf) log.Logger {
 	enConfig := zap.NewProductionEncoderConfig() //生成配置
 
 	// 时间格式
-	enConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	//enConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	enConfig.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+		enc.AppendString(t.Format("2006-01-02 15:04:05"))
+	}
+	enConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 
-	level := zap.InfoLevel
 	w := zapcore.AddSync(hook)
-	allCore := make([]zapcore.Core, 0, 2)
-	fileCore := zapcore.NewCore(
-		zapcore.NewConsoleEncoder(enConfig), //编码器配置
-		w,                                   //打印到控制台和文件
-		level,                               //日志等级
-	)
-	allCore = append(allCore, fileCore)
 
-	if conf.EnableConsole {
-		//打印到控制台
-		consoleCore := zapcore.NewCore(
-			zapcore.NewConsoleEncoder(enConfig),
-			os.Stdout,
-			level,
-		)
-		allCore = append(allCore, consoleCore)
+	allCore := []zapcore.Core{
+		zapcore.NewCore(
+			zapcore.NewConsoleEncoder(enConfig), //编码器配置
+			w,                                   //打印到文件
+			c.level,                             //日志等级
+		),
+	}
+
+	if c.enableConsole {
+		allCore = append(allCore, zapcore.NewCore(
+			zapcore.NewConsoleEncoder(enConfig), //编码器配置
+			os.Stdout,                           //打印到控制台
+			c.level,                             //日志等级
+		))
 	}
 
 	core := zapcore.NewTee(allCore...)
+
 	logger := zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
-	//_log := log.New(hook, "", log.LstdFlags)
-	//logger.Sugar().Info()
 	return logger.Sugar()
-	//_log.Println("Start...")
+}
+
+// WithLogFile 指定日志文件
+func WithLogFile(filePath string) OptFunc {
+	return func(c *conf) {
+		c.filePath = filePath
+	}
+}
+
+// WithLevel 指定日志等级
+func WithLevel(l zapcore.Level) OptFunc {
+	return func(c *conf) {
+		c.level = l
+	}
+}
+
+// WithMaxSize 指定最大日志大小
+func WithMaxSize(maxSize int) OptFunc {
+	return func(c *conf) {
+		c.maxSize = maxSize
+	}
+}
+
+// WithMaxBackups 指定最大日志备份
+func WithMaxBackups(maxBackups int) OptFunc {
+	return func(c *conf) {
+		c.maxBackups = maxBackups
+	}
+}
+
+// WithMaxAge 指定最大日志保留时间
+func WithMaxAge(maxAge int) OptFunc {
+	return func(c *conf) {
+		c.maxAge = maxAge
+	}
+}
+
+// WithCompress 指定是否压缩
+func WithCompress(compress bool) OptFunc {
+	return func(c *conf) {
+		c.compress = compress
+	}
+}
+
+// WithConsole 是否打印到控制台
+func WithConsole(enable bool) OptFunc {
+	return func(c *conf) {
+		c.enableConsole = enable
+	}
 }
