@@ -93,7 +93,7 @@ func Logger(opts ...OptFunc) log.Logger {
 	enConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 
 	w := zapcore.AddSync(hook)
-	level := new(zap.AtomicLevel)
+	level := zap.NewAtomicLevel()
 	level.SetLevel(c.level)
 
 	allCore := []zapcore.Core{
@@ -117,7 +117,7 @@ func Logger(opts ...OptFunc) log.Logger {
 	logger := zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
 	return &LoggerAgent{
 		SugaredLogger: logger.Sugar(),
-		level:         level,
+		level:         &level,
 	}
 }
 
