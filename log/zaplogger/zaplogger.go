@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"xenergyconservation/pkg/log"
+	"github.com/mrkang-kit/log"
 
 	"github.com/natefinch/lumberjack"
 	"go.uber.org/zap"
