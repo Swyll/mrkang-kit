@@ -25,6 +25,11 @@ type conf struct {
 	enableConsole bool          // 是否打印到控制台
 }
 
+type LoggerAgent struct {
+	*zap.AtomicLevel
+	*zap.SugaredLogger
+}
+
 // GetLogLevel 从字符串获取日志等级
 func GetLogLevel(level string) zapcore.Level {
 	v := strings.ToLower(level)
@@ -84,12 +89,13 @@ func Logger(opts ...OptFunc) log.Logger {
 	enConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 
 	w := zapcore.AddSync(hook)
+	level := zap.AtomicLevel.SetLevel(c.level)
 
 	allCore := []zapcore.Core{
 		zapcore.NewCore(
 			zapcore.NewConsoleEncoder(enConfig), //编码器配置
 			w,                                   //打印到文件
-			c.level,                             //日志等级
+			level,                               //日志等级
 		),
 	}
 
@@ -97,14 +103,17 @@ func Logger(opts ...OptFunc) log.Logger {
 		allCore = append(allCore, zapcore.NewCore(
 			zapcore.NewConsoleEncoder(enConfig), //编码器配置
 			os.Stdout,                           //打印到控制台
-			c.level,                             //日志等级
+			level,                               //日志等级
 		))
 	}
 
 	core := zapcore.NewTee(allCore...)
 
 	logger := zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
-	return logger.Sugar()
+	return &LoggerAgent{
+		SugaredLogger: logger.Sugar(),
+		AtomicLevel:   level,
+	}
 }
 
 // WithLogFile 指定日志文件
