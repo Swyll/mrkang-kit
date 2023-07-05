@@ -93,7 +93,8 @@ func Logger(opts ...OptFunc) log.Logger {
 	enConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 
 	w := zapcore.AddSync(hook)
-	level := zap.AtomicLevel.SetLevel(c.level)
+	level := new(zap.AtomicLevel)
+	level.SetLevel(c.level)
 
 	allCore := []zapcore.Core{
 		zapcore.NewCore(
